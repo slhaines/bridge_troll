@@ -101,14 +101,22 @@ class EventsController < ApplicationController
     end
   end
 
-  def send_survey_email
-    @event = Event.find(params[:id])
-    SurveySender.send_surveys(@event)
-    flash[:notice] = "Follow up survey emails sent!"
-    redirect_to organize_event_path(@event)
-  end
 
   def diets
+  end
+
+  def customize_survey_greeting
+  end
+
+  def update_and_send_survey
+    if @event.update_attributes(params[:event])
+      puts "event updated"
+      SurveySender.send_surveys(@event)
+      flash[:notice] = "Follow up survey emails sent!"
+      redirect_to organize_event_path(@event)
+    else
+      flash[:notice] = "Something went wrong. Try again?"
+    end
   end
 
   def unpublished
@@ -157,5 +165,4 @@ class EventsController < ApplicationController
   def sort_by_starts_at(events)
     events.sort_by { |e| e.starts_at.to_time }
   end
-
 end

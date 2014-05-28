@@ -6,6 +6,10 @@
 <body>
 <p>Thanks so much for attending <%= @rsvp.event.title %>!!!</p>
 
+<% if @rsvp.event.custom_survey_greeting.present? %>
+  <p><%= @rsvp.event.custom_survey_greeting %></p>
+<% end %>
+
 <p>We're always trying to improve, so if you could take five minutes and give us your feedback, we'd really, truly appreciate it.</p>
 
 <p><%= link_to "Click right here to take the survey!", new_event_rsvp_survey_url(@rsvp.event, @rsvp)%></p>

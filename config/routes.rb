@@ -50,11 +50,12 @@ Bridgetroll::Application.routes.draw do
     member do
       post "publish"
       post "flag"
+      post "update_and_send_survey"
       get "organize"
       get "organize_sections"
       get "levels"
       get "diets"
-      get "send_survey_email"
+      get "customize_survey_greeting"
     end
   end
 

@@ -1,0 +1,10 @@
+<h2>Customize Survey Greeting</h2>
+<p>Add any discount codes, links, or other encouragement that you want to include in the survey email to the students and volunteers</p>
+
+<%= form_for @event, method: "POST", url: update_and_send_survey_event_path(@event) do |f| %>
+  <div class="field">
+    <%= f.label :custom_survey_greeting %>
+    <%= f.text_area :custom_survey_greeting, :rows => 4, :class => "input-xxlarge" %>
+  </div>
+  <%= f.submit "Save and Send Survey", class: "btn" %>
+<% end %>

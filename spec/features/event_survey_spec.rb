@@ -5,6 +5,22 @@ describe 'the post-workshop survey' do
     @event = create(:event)
     @user = create(:user)
     @rsvp = create(:rsvp, user: @user, event: @event)
+    @organizer = create(:user)
+    @event.organizers << @organizer
+  end
+
+  describe 'customizing the survey' do
+    before do
+      sign_in_as @organizer
+      visit organize_event_path(@event)
+      click_link 'Send Survey'
+    end
+
+    it 'allows the organizer to customize the survey' do
+      expect(page).to have_content "Add text to the survey email here"
+      fill_in 'Survey greeting', with: "Don't forget to eat cheese after lactaid!"
+      click_button 'Submit'
+    end
   end
 
   describe 'taking a survey' do
@@ -59,8 +75,6 @@ describe 'the post-workshop survey' do
 
     context 'as an organizer' do
       before do
-        @organizer = create(:user)
-        @event.organizers << @organizer
         sign_in_as @organizer
         visit event_surveys_path(@event)
       end
