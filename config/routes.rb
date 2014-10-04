@@ -56,6 +56,7 @@ Bridgetroll::Application.routes.draw do
       get "levels"
       get "diets"
       get "send_survey_email"
+      get "past_attendance"
     end
   end
 
