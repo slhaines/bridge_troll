@@ -4,6 +4,7 @@
 <%= render :partial => 'shared/organizer_breadcrumb', locals: {current_page_title: "Past Attendance for #{@event.course.title} Classes"} %>
 <div class='food-preferences'>
   <h2>Total RSVPs for this event: <%= @event.rsvps.count %></h2>
+  <h2>Projected attendance for this event: <%= @event.rsvps.count * @past_percent_attendance / 100 %> people</h2>
 
   <h2>Past Attendance Statistics</h2>
   <%  %>
