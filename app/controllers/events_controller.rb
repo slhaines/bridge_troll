@@ -100,6 +100,9 @@ class EventsController < ApplicationController
   def diets
   end
 
+  def past_attendance
+  end
+
   protected
 
   def event_params
