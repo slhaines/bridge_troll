@@ -107,7 +107,7 @@ class EventsController < ApplicationController
     @total_past_rsvps = @past_rsvp_ids.count
     @total_past_sessions = RsvpSession.where(rsvp_id: @past_rsvp_ids).count
     @total_past_checkins = RsvpSession.where(rsvp_id: @past_rsvp_ids, checked_in: true).count
-    @past_percent_attendance = @total_past_checkins/@total_past_sessions.to_f*100
+    @past_percent_attendance = @total_past_checkins / @total_past_sessions.to_f * 100
   end
 
   protected
