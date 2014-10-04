@@ -1,1 +1,17 @@
-<h2>hello world</h2>
+<%= content_for(:header_text, @event.title) %>
+<%= content_for(:header_link, event_organizer_tools_path(@event)) %>
+
+<%= render :partial => 'shared/organizer_breadcrumb', locals: {current_page_title: "Past Attendance for #{@event.course.title} Classes"} %>
+<div class='food-preferences'>
+  <h2>Total RSVPs for this event: <%= @event.rsvps.count %></h2>
+
+  <h2>Past Attendance Statistics</h2>
+  <%  %>
+  <h3>Total Past RSVPs: <%= @total_past_rsvps %></h3>
+  <h3>Total Past Sessions: <%= @total_past_sessions %></h3>
+  <h3>Total Past Checkins: <%= @total_past_checkins %></h3>
+
+  <h2>Other dietary restrictions:</h2>
+  <ul>
+  </ul>
+</div>
