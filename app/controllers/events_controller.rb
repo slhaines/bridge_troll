@@ -101,6 +101,12 @@ class EventsController < ApplicationController
   end
 
   def past_attendance
+    @past_event_ids = Event.where("starts_at < ?", Time.now).pluck(:id)
+    @total_past_events = @past_event_ids.count
+    @past_rsvp_ids = Rsvp.where(event_id: @past_event_ids)
+    @total_past_rsvps = @past_rsvp_ids.count
+    @total_past_sessions = RsvpSession.where(rsvp_id: @past_rsvp_ids).count
+    @total_past_checkins = RsvpSession.where(rsvp_id: @past_rsvp_ids, checked_in: true).count
   end
 
   protected
