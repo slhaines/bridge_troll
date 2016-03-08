@@ -2,9 +2,9 @@ Bridgetroll.Dialogs.Base = (function () {
   return Bridgetroll.Views.Base.extend({
     className: function () {
       if (Bridgetroll.railsEnv === 'test') {
-        return 'modal hide';
+        return 'modal';
       } else {
-        return 'modal hide fade';
+        return 'modal fade';
       }
     },
     showModally: function () {
@@ -12,7 +12,7 @@ Bridgetroll.Dialogs.Base = (function () {
       $(Bridgetroll.modalContainerSelector).append(this.el);
       $(this.el).modal();
 
-      this.$el.on('shown', function () {
+      this.$el.on('modal.bs.shown', function () {
         $(this).find('.btn').focus();
         $(this).find('[autofocus]').focus();
       });

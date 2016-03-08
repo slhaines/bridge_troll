@@ -7,10 +7,10 @@
 //= require jquery
 //= require jquery_ujs
 //= require jquery-ui/datepicker
-//= require twitter/bootstrap/modal
-//= require twitter/bootstrap/transition
-//= require twitter/bootstrap/tooltip
-//= require twitter/bootstrap/popover
+//= require bootstrap/transition
+//= require bootstrap/modal
+//= require bootstrap/tooltip
+//= require bootstrap/popover
 //= require select2
 //= require handlebars.runtime
 //= require underscore
@@ -29,42 +29,7 @@
 //= require_tree ./views
 //= require ./dialogs/base_dialog
 //= require_tree ./dialogs
+//= require DataTables
+//= require DataTables/media/js/dataTables.bootstrap
 //= require_tree .
 //= require jquery_nested_form
-//= require dataTables/jquery.dataTables
-//= require dataTables/bootstrap/2/jquery.dataTables.bootstrap
-
-$(document).ready(function () {
-  $.extend( $.fn.dataTable.defaults, {
-    "dom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span6'i><'span6'p>>",
-    "pagingType": "bootstrap",
-    "pageLength": 50
-  });
-
-  $('.datatable').dataTable();
-
-  var tableNeedsPagination = $('.datatable-sorted tbody tr').length > 10;
-  var tableSortOrder = $('.datatable-sorted th').map(function (ix, element) {
-    var defaultSortDirection = $(element).data('default-sort');
-    return defaultSortDirection ? [[ix, defaultSortDirection]] : null;
-  })[0];
-  $('.datatable-sorted').dataTable({
-    "paging": tableNeedsPagination,
-    "order": tableSortOrder || [[ 1, "desc" ]],
-    "columnDefs": [
-      {'targets': ['date'], "type": "date"}
-    ]
-  });
-
-  $('.datatable-checkins').dataTable({
-    "paging": false,
-    "order": [[ 0, "asc" ]],
-    "columnDefs": [
-      {'targets': ['checkins-action'], sortable: false}
-    ]
-  });
-
-  if ($(window).height() < $('html').height()) {
-    $('footer').show();
-  }
-});

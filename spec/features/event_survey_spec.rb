@@ -7,6 +7,23 @@ describe 'the post-workshop survey' do
     @rsvp = create(:rsvp, user: @user, event: @event)
   end
 
+  describe 'previewing survey' do
+    before do
+      @organizer = create(:user)
+      @event.organizers << @organizer
+      sign_in_as @organizer
+      visit preview_event_surveys_path(@event)
+    end
+
+    it 'should not allow organizer to submit survey' do
+      expect(page).not_to have_content("Submit")
+    end
+
+    it 'should allow organizer to email RSVPs the survey' do
+      expect(page).to have_content("Send Survey")
+    end
+  end
+
   describe 'taking a survey' do
     before do
       sign_in_as @user
@@ -17,15 +34,17 @@ describe 'the post-workshop survey' do
       it 'should have survey questions' do
         expect(page).to have_content "How was #{@event.title}"
 
-        within("#survey-form") do
+        within(".survey-form") do
           expect(page).to have_content "What was great?"
           expect(page).to have_button "Submit"
         end
       end
 
       it 'should take you home on submit' do
-        fill_in 'What was great?', with: "Hotdogs"
-        click_button 'Submit'
+        within(".survey-form") do
+          fill_in 'What was great?', with: "Hotdogs"
+          click_button 'Submit'
+        end
 
         expect(page).to have_content "Thanks for taking the survey!"
       end

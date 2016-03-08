@@ -9,11 +9,12 @@ development:
   pool: 5
   timeout: 5000
 
-# postgres.app variation
-#development:
-#  adapter: postgresql
-#  database: bridgetroll_development
-#  host: localhost
+<% if ENV['FORCE_POSTGRES'] %>
+development:
+  adapter: postgresql
+  database: bridgetroll_development
+  host: localhost
+<% end %>
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
@@ -24,8 +25,13 @@ test:
   pool: 5
   timeout: 5000
 
+<% if ENV['FORCE_POSTGRES'] %>
+test:
+  adapter: postgresql
+  database: bridgetroll_test
+  host: localhost
+<% end %>
+
 production:
-  adapter: sqlite3
-  database: db/production.sqlite3
-  pool: 5
-  timeout: 5000
+  url:  <%= ENV["DATABASE_URL"] %>
+  pool: <%= ENV["DB_POOL"] || ENV['MAX_THREADS'] || 5 %>

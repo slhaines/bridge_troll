@@ -20,6 +20,13 @@ describe SurveysController do
         expect(assigns(:rsvp)).to eq @rsvp
       end
 
+      it "shows the survey form when only an event_id is provided" do
+        get :new, event_id: @event.id
+        expect(response).to render_template(:new)
+        expect(assigns(:event)).to eq @event
+        expect(assigns(:rsvp)).to eq @rsvp
+      end
+
       context "if the survey has already been taken" do
         before do
           Survey.create(rsvp_id: @rsvp.id)
@@ -37,9 +44,9 @@ describe SurveysController do
           @other_rsvp = create(:rsvp, user: @other_user)
         end
 
-        it "redirects to the home page" do
+        it "takes the survey for the logged-in user instead" do
           get :new, event_id: @event.id, rsvp_id: @other_rsvp.id
-          expect(response.code).to eq("302")
+          expect(assigns(:rsvp).user).to eq(@user)
         end
       end
     end
@@ -68,12 +75,19 @@ describe SurveysController do
           @other_rsvp = create(:rsvp, user: @other_user)
         end
 
-        it "doesn't make a survey" do
+        it "creates a survey for the logged-in user" do
           params = {
-            event_id: @event.id, rsvp_id: @other_rsvp.id, good_things: "Ruby",
-            bad_things: "Moar cake", other_comments: "Superfun", recommendation_likelihood: "9"
+            event_id: @event.id,
+            rsvp_id: @other_rsvp.id,
+            survey: {
+              good_things: "Ruby",
+              bad_things: "Moar cake",
+              other_comments: "Superfun",
+              recommendation_likelihood: "9"
+            }
           }
-          expect { put :create, params }.to change { Survey.count }.by(0)
+          expect { put :create, params }.to change { Survey.count }.by(1)
+          expect(Survey.last.rsvp.user).to eq(@user)
         end
       end
     end
@@ -84,6 +98,7 @@ describe SurveysController do
       before do
         @organizer = create(:user)
         @event.organizers << @organizer
+        create(:survey, rsvp: @rsvp)
         sign_in @organizer
       end
 
@@ -91,7 +106,7 @@ describe SurveysController do
         get :index, event_id: @event.id
         expect(response).to be_success
         expect(assigns(:event)).to eq @event
-        expect(assigns(:volunteer_rsvps)).to eq @event.attendee_rsvps
+        expect(assigns(:volunteer_surveys).to_a).to eq [@rsvp.survey]
       end
     end
 

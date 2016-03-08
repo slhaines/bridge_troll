@@ -116,11 +116,7 @@ class Course < ActiveHash::Base
       id: 3,
       name: 'JAVASCRIPT',
       title: 'Intro to Javascript',
-      description: 'This workshop will teach programming using Javascript.'\
-                   'You can find all the curriculum materials at <a'\
-                   'href="http://snake-tutorial.zeespencer.com.s3-website-us'\
-                   '-west-2.amazonaws.com/lesson-1/">the temporary location'\
-                   '</a>.',
+      description: 'This workshop will teach programming using Javascript. You can find all the curriculum materials at <a href="http://docs.railsbridge.org">docs.railsbridge.org</a>.',
       levels: [
         {
           level: 1,
@@ -137,45 +133,318 @@ class Course < ActiveHash::Base
           title: "Programmer new to Javascript",
           level_description: [
             'Comfortable making a complex webpage',
-            'Some experience in a programming lanugage like ActionScript, C, Java, Ruby or Python',
+            'Some experience in a programming language like ActionScript, C, Java, Ruby or Python',
             'Has seen javascript, but didn\'t really understand how it worked',
           ]
+        }, {
+          level: 3,
+          color: 'purple',
+          title: "Some experience with JavaScript",
+          level_description: [
+            'Feels comfortable writing functions and objects in JavaScript',
+            'Used jQuery before and has seen an AJAX request, but doesn\'t understand all the moving parts',
+            'Interested in learning how to organize JavaScript code using models and views'
+          ]
         }
+
       ]
     }, {
       id: 4,
       name: 'iOS',
       title: 'Intro to iOS Development',
-      description: 'This workshop will cover how to make an iOS application.'\
-                   'You can find the curriculum outline at <a'\
-                   'href="https://github.com/thecodepath/ios_guides/wiki/'\
-                   'iOS-1-day-Weekend-Workshop">the temporary location</a>.',
+      description: 'This workshop will cover how to make an iOS application.',
       levels: [
         {
           level: 1,
           color: 'blue',
-          title: "No Programming Experience",
+          title: "Totally New to Programming",
           level_description: [
-            'New to programming, including iOS programming',
-            'No experience with programming languages other than HTML and CSS',
+            'You have little to no experience with the terminal or a graphical IDE',
+            'You might have done a little bit with HTML or CSS, but not necessarily',
           ]
         }, {
           level: 2,
-          color: 'orange',
-          title: "New programmer, and new to iOS programming",
+          color: 'green',
+          title: "Somewhat New to Programming",
           level_description: [
-            'Some programming experiencein another language like Ruby, Python, C, Java',
-            'Has perhaps seen Objective-C, but didn\'t really understand how it worked',
+            'You may have used the terminal a little — to change directories, for instance',
+            'You might have done an online programming tutorial or two',
+            'You know what a method is',
+          ]
+        }, {
+          level: 3,
+          color: 'gold',
+          title: "Some iOS App Development Experience",
+          level_description: [
+            "You're comfortable using the terminal, but not necessarily a Power User",
+            'You have a general understanding of XCode and of iOS app structure, perhaps from a prior workshop or tutorial',
+            'Some programming experience in another language like Ruby, Python, C, Java',
+          ]
+        }, {
+          level: 4,
+          color: 'pink',
+          title: "Experienced Designer new to iOS programming",
+          level_description: [
+            "You're proficient in design tools (Adobe Creative Suite, etc)",
+            "You're familiar with general UI design principles",
+            "You might be familiar with HTML and CSS.",
+            "You're new to the XCode environment and to iOS app development",
+          ]
+        }, {
+          level: 5,
+          color: 'orange',
+          title: "Experienced Programmer new to iOS programming",
+          level_description: [
+            "You're proficient in another language and understand general programming concepts",
+            "You're new to the XCode environment and to iOS app development",
+            'You might be familiar with version control',
+          ]
+        },
+      ]
+    }, {
+      id: 5,
+      name: 'RUBY_JS_PAIRING',
+      title: 'Open Source Pairing Workshop',
+      description: 'This workshop is an opportunity to improve your coding skills by pair programming on an open source project.',
+      levels: [
+        {
+          level: 2,
+          color: 'orange',
+          title: "Javascript",
+          level_description: [
+            'Some experience writing JavaScript at a front-end workshop or personal project',
+            'You have a basic understanding of the Browser DOM (Document Object Model)',
+            'You have built a website or other app on your own',
           ]
         }, {
           level: 3,
           color: 'purple',
-          title: "Experienced Programmer new to iOS programming",
+          title: "Ruby",
           level_description: [
-            'Very comfortable in programming lanugages other than Objective-C.',
-            'Experienced programmer, but new to creating iOS apps',
+            'Some experience writing Ruby at a prior workshop and/or personal project',
+            'You have built a website or other app on your own',
           ]
-        },
+        }
+      ]
+    }, {
+      id: 6,
+      name: 'Android',
+      title: 'Intro to Android Development',
+      description: 'This workshop will cover how to make an Android application.',
+      levels: [
+        {
+          level: 1,
+          color: 'blue',
+          title: "Totally New to Programming",
+          level_description: [
+            'You have little to no experience with the command line or a graphical IDE',
+            'You might have done a little bit with HTML or CSS, but not necessarily',
+            'You\'re unfamiliar with terms like methods, arrays, lists, hashes, or dictionaries.'
+          ]
+        }, {
+          level: 2,
+          color: 'green',
+          title: "Somewhat New to Programming",
+          level_description: [
+            'You may have used the command line a little — to change directories, for instance',
+            'You might have done an online programming tutorial or two',
+            'You know what a method is'
+          ]
+        }, {
+          level: 3,
+          color: 'gold',
+          title: "Some Android App Development Experience",
+          level_description: [
+            'You\'re comfortable using the command line, but not necessarily a Power User',
+            'You have a general understanding of an Android app\'s structure, perhaps from a prior workshop or tutorial',
+            'Some programming experience in another language like Ruby, Python, C, Java'
+          ]
+        }, {
+          level: 4,
+          color: 'pink',
+          title: "Experienced Non-Java Programmer new to Android app development",
+          level_description: [
+            'You\'re proficient in non-Java programming language and understand general programming concepts, like collections and scope.',
+            'You\'re new to the Android Studio environment and to Android app development',
+            'You might be familiar with version control'
+          ]
+        }, {
+          level: 5,
+          color: 'orange',
+          title: "Experienced Java Programmer new to Android app development",
+          level_description: [
+            'You\'re proficient in Java and understand general programming concepts, like collections and scope.',
+            'You\'re new to the Android Studio environment and to Android app development',
+            'You might be familiar with version control'
+          ]
+        }
+      ]
+    }, {
+      id: 7,
+      name: 'BWAG Go',
+      title: 'Building Web Apps With Go',
+      description: "If you are reading this then you have just started your journey from newcomer to pro. No seriously, web programming in Go is so fun and easy that you won't even notice how much information you are learning along the way!
+      </p>
+      This course is courtesy of <a href='https://bit.ly/codegansta-bwag'>Jeremy Saenz</a>.
+      </p>
+      You can find all the course content at: <a href='https://bit.ly/gobridge-bwag'>https://gobridge.gitbooks.io/building-web-apps-with-go/content/en/index.html</a>.",
+      levels: [
+        {
+          level: 2,
+          color: 'green',
+          title: "Somewhat New to Programming",
+          level_description: [
+            'You know what a function is',
+            'You might have done an online programming tutorial or two',
+            'You may have used the terminal a little — to change directories, for instance'
+          ]
+        }, {
+          level: 3,
+          color: 'gold',
+          title: "Some Go Experience",
+          level_description: [
+            'You know how to define a function in Go',
+            'You have a decent handle on Go slices and maps',
+            'You have a general understanding of a Go app\'s structure, perhaps from a prior workshop or tutorial',
+            'You\'re comfortable using the terminal, but not necessarily a Power User'
+          ]
+        }, {
+          level: 4,
+          color: 'orange',
+          title: "Other Programming Experience",
+          level_description: [
+            'You\'re new to Go',
+            'You\'re proficient in another language and understand general programming concepts, like collections and scope.',
+            'You are an intermediate-level developer',
+            'You might be familiar with version control and basic web architecture'
+          ]
+        }
+      ]
+    }, {
+      id: 8,
+      name: 'BWAG Go Portugues',
+      title: 'Building Web Apps With Go - Em Portugues',
+      description: "Se você está lendo isto então você está prestes a embarcar em uma jornada de iniciante a pro. Sério! Programação web em Go é tão divertido e fácil que você nem vai perceber quanta informação você está aprendendo ao longo do curso.
+      </p>
+      Este curso é uma courtesia de <a href='https://bit.ly/codegansta-bwag'>Jeremy Saenz</a>.
+      </p>
+      Todo o material do curso está aqui: <a href='https://bit.ly/gobridge-bwag'>https://gobridge.gitbooks.io/building-web-apps-with-go/content/pt-br/index.html</a>.",
+      levels: [
+        {
+          level: 2,
+          color: 'green',
+          title: "Mais ou Menos Novato(a) em Programação",
+          level_description: [
+            'Você sabe o que é uma função',
+            'Talvez você já tenha feito um tutorial ou dois online',
+            'Você sabe usar o básico do terminal - mudar de diretórios, por exemplo'
+          ]
+        }, {
+          level: 3,
+          color: 'gold',
+          title: "Alguma Experiência em Go",
+          level_description: [
+            'Você sabe como definir uma função em Go',
+            'Você entende bem como funciona slices e maps em Go',
+            'Você tem um entendimento básico sobre a estrutura de um aplicativo Go, talvez de outro workshop ou tutorial',
+            'Você se sente a vontade no terminal, mas não é necessariamente um Super Usuário(a)'
+          ]
+        }, {
+          level: 4,
+          color: 'orange',
+          title: "Outras Experiências em Programação",
+          level_description: [
+            'Você não sabe Go',
+            'Você é proficiente em outra linguagem e entende conceitos gerais de programação, como por exemplo coleções e escopo',
+            'Você é desenvolvedor(a) de nível intermediário',
+            'Talvez você saiba o básico sobre controle de versão e arquitetura web básica'
+          ]
+        }
+      ]
+    }, {
+      id: 9,
+      name: 'Ultimate Go',
+      title: 'Ultimate Go',
+      description: "This class provides an intensive, comprehensive and idiomatic view of the language. We focus on both the specification and implementation of the language, including topics ranging from language syntax, Go’s type system, concurrency, channels, testing and more. We believe this class is perfect for anyone who wants a jump start in learning Go or who wants a more thorough understanding of the language and its internals.
+      </p>
+      This course is courtesy of <a href='https://bit.ly/ardanlabs'>ArdanLabs</a>.
+      </p>
+      You can find all the course content at: <a href='https://github.com/gobridge/ultimate_go'>https://github.com/gobridge/ultimate_go</a>.",
+      levels: [
+        {
+          level: 3,
+          color: 'gold',
+          title: "Some Go Experience",
+          level_description: [
+            'You know how to define a function in Go',
+            'You have a decent handle on Go slices and maps',
+            'You have a general understanding of a Go app\'s structure, perhaps from a prior workshop or tutorial',
+            'You\'re comfortable using the terminal, but not necessarily a Power User'
+          ]
+        }, {
+          level: 4,
+          color: 'orange',
+          title: "Other Programming Experience",
+          level_description: [
+            'You\'re new to Go',
+            'You\'re proficient in another language and understand general programming concepts, like collections and scope.',
+            'You are an intermediate-level developer',
+            'You might be familiar with version control and basic web architecture'
+          ]
+        }
+      ]
+    }, {
+      id: 10,
+      name: "Todd McLeod's Go Course",
+      title: "Learn How To Code Google's Go (golang) Programming Language",
+      description: "This course consists of a series of video lectures by the University Professor in Computer Science Todd McLeod. It is a first semester university level programming course and it contains over 20 hours of content that will help you understand why the Go programming language is the best language you can learn today. It will also help you acquire additional valuable programming skills including understanding environment variables, using a command line interface (CLI) terminal, understanding SHA-1 checksums, working with GitHub, and increasing your productivity with an integrated development environment (IDE) such as Webstorm or Atom.io. This course provides options for multiple workshop sessions, each focusing on a separate set of topics.
+      </p>
+      Once a workshop for this course is scheduled, the teachers will be given a code to access the course for free, courtesy of
+      <a href='https://bit.ly/Todd_McLeod_LHTCG'>https://twitter.com/Todd_McLeod</a>.
+      </p>
+      You can find all the course content at: <a href='https://bit.ly/gobridge-lhtc'>https://www.udemy.com/learn-how-to-code/</a> and at <a href='https://github.com/GoesToEleven/GolangTraining/'>https://github.com/GoesToEleven/GolangTraining/</a>.
+      </p>
+      Note: Please also leave Todd a review as a thank you for creating this course for everyone. This will help other students find this course.",
+      levels: [
+        {
+          level: 1,
+          color: 'blue',
+          title: "Totally New to Programming",
+          level_description: [
+            'You have little to no experience with the terminal or a graphical IDE',
+            'You might have done a little bit with HTML or CSS, but not necessarily',
+            'You\'re unfamiliar with terms like functions, arrays, lists, hashes/maps, or dictionaries.',
+          ]
+        }, {
+          level: 2,
+          color: 'green',
+          title: "Somewhat New to Programming",
+          level_description: [
+            'You know what a function is',
+            'You might have done an online programming tutorial or two',
+            'You may have used the terminal a little — to change directories, for instance',
+          ]
+        }, {
+          level: 3,
+          color: 'gold',
+          title: "Some Go Experience",
+          level_description: [
+            'You know how to define a function in Go',
+            'You have a decent handle on Go slices and maps',
+            'You have a general understanding of a Go app\'s structure, perhaps from a prior workshop or tutorial',
+            'You\'re comfortable using the terminal, but not necessarily a Power User',
+          ]
+        }, {
+          level: 4,
+          color: 'orange',
+          title: "Other Programming Experience",
+          level_description: [
+            'You\'re new to Go',
+            'You\'re proficient in another language and understand general programming concepts, like collections and scope.',
+            'You are an intermediate-level developer',
+            'You might be familiar with version control and basic web architecture'
+          ]
+        }
       ]
     }
   ]

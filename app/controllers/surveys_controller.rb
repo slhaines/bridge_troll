@@ -1,20 +1,21 @@
 class SurveysController < ApplicationController
-  before_filter :authenticate_user!
-  before_filter :load_resources, except: :index
-  before_filter :validate_user!, except: :index
-  before_filter :validate_organizer!, only: :index
+  before_action :authenticate_user!
+  before_action :find_event
+  before_action :find_rsvp, except: [:index, :preview]
 
   def new
+    authorize @rsvp, :survey?
     @survey = Survey.where(rsvp_id: @rsvp.id).first_or_initialize
 
     if @survey.persisted?
-      flash[:error] = "It looks like you've already taken this survey! Email workshops@railsbridge.org with any other feedback you have."
+      flash[:error] = "It looks like you've already taken this survey! Email your workshop organizer with any other feedback you have."
     end
   end
 
   def create
+    authorize @rsvp, :survey?
     @survey = Survey.new(survey_params)
-    @survey.rsvp_id = params[:rsvp_id]
+    @survey.rsvp_id = @rsvp.id
 
     if @survey.save
       flash[:notice] = "Thanks for taking the survey!"
@@ -25,9 +26,17 @@ class SurveysController < ApplicationController
   end
 
   def index
-    @event = Event.find(params[:event_id])
-    @student_rsvps = @event.student_rsvps
-    @volunteer_rsvps = @event.volunteer_rsvps
+    authorize @event, :edit?
+    @student_surveys = Survey.where(rsvp_id: @event.rsvps.where(role_id: Role::STUDENT.id).pluck(:id))
+    @volunteer_surveys = Survey.where(rsvp_id: @event.volunteer_rsvps.pluck(:id))
+  end
+
+  def preview
+    authorize @event, :edit?
+    @survey = Survey.new
+    @rsvp = Rsvp.new(id: 0)
+    @preview = true
+    render :new
   end
 
   private
@@ -36,14 +45,11 @@ class SurveysController < ApplicationController
     params.require(:survey).permit(Survey::PERMITTED_ATTRIBUTES)
   end
 
-  def load_resources
+  def find_event
     @event = Event.find(params[:event_id])
-    @rsvp = Rsvp.find(params[:rsvp_id])
   end
 
-  def validate_user!
-    unless current_user.rsvps.include?(@rsvp)
-      redirect_to root_path, notice: "You're not allowed to do that. Here, look at some events instead!"
-    end
+  def find_rsvp
+    @rsvp = current_user.rsvps.find_by(event_id: @event.id)
   end
 end

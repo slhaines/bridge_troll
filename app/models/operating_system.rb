@@ -2,6 +2,18 @@ class OperatingSystem < ActiveHash::Base
   include ActiveHash::Enum
   self.data = [
     {
+      id: 12,
+      name: 'OSX_EL_CAPITAN',
+      type: :osx,
+      title: 'Mac OS X - El Capitan (10.11)'
+    },
+    {
+      id: 11,
+      name: 'OSX_YOSEMITE',
+      type: :osx,
+      title: 'Mac OS X - Yosemite (10.10)'
+    },
+    {
       id: 10,
       name: 'OSX_MAVERICKS',
       type: :osx,

@@ -14,28 +14,34 @@ Capybara.asset_host = "http://#{Rails.application.routes.default_url_options[:ho
 
 Dir[Rails.root.join("spec/support/**/*.rb")].each {|f| require f}
 
+Shoulda::Matchers.configure do |config|
+  config.integrate do |with|
+    with.test_framework :rspec
+    with.library :rails
+  end
+end
+
 RSpec.configure do |config|
   config.infer_spec_type_from_file_location!
 
   config.use_transactional_fixtures = true
 
   config.before(:each) do
-    WebMock.disable_net_connect!(:allow_localhost => true)
+    WebMock.disable_net_connect!(allow_localhost: true)
+    Time.zone = 'UTC'
   end
 
-  config.include Devise::TestHelpers, :type => :controller
+  config.include Devise::TestHelpers, type: :controller
+  config.include SignInHelper, type: :feature
+  config.include EventFormHelper, type: :feature
+  config.include FormHelper, type: :feature
 
   config.include FactoryGirl::Syntax::Methods
 
   [:feature, :request].each do |type|
     config.include Warden::Test::Helpers, type: type
-  end
-
-  config.before do |example|
-    Warden.test_mode! if example.metadata[:js]
-  end
-
-  config.after do |example|
-    Warden.test_reset! if example.metadata[:js]
+    config.after(:example, type: type) do
+      Warden.test_reset!
+    end
   end
 end

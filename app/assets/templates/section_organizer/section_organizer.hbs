@@ -19,9 +19,11 @@
       Poll for Changes
     {{/if}}
   </button>
-  <button class='btn auto-arrange-choices hide-on-projector'>
-    Auto-Arrange
-  </button>
+  {{#if upcoming}}
+    <button class='btn auto-arrange-choices hide-on-projector'>
+      Auto-Arrange
+    </button>
+  {{/if}}
   {{#if showOS}}
     <div class='student-os-key'>
       <div class='swatch linux'></div>Linux
@@ -50,17 +52,22 @@
     <i class='fa fa-question-circle' style="margin-right: 0;"></i>
   </button>
 </div>
-{{#unless hasSections}}
-  <div class='auto-assign-reminder'>
-    Click the 'Auto Arrange' button above to get started!
-  </div>
-{{/unless}}
+{{#if upcoming}}
+  {{#unless hasSections}}
+    <div class='auto-assign-reminder'>
+      Click the 'Auto Arrange' button above to get started!
+    </div>
+  {{/unless}}
+{{/if}}
 <div class='masonry-container'></div>
 {{#unless projectorMode}}
   <div class='bridgetroll-section-level level0'></div>
 {{/unless}}
 {{#each levels}}
   <div class='bridgetroll-section-level level{{this.index}}'>
-    <div class='bridgetroll-section-title header level{{this.index}}'>{{this.color}}</div>
+    <div class='bridgetroll-section-title header level{{this.index}} level-{{this.color}}'>
+      {{capitalize this.color}}
+      <a href="levels" target="_blank"><i class='fa fa-info-circle info'></i></a>
+    </div>
   </div>
 {{/each}}

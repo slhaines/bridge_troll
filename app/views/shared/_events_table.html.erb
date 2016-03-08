@@ -1,10 +1,14 @@
 <table class="<%= events.any? ? 'datatable-sorted' : '' %> table table-striped table-bordered table-condensed responsive-table">
   <thead>
+
   <tr>
     <th>Title</th>
     <th class='date'>Date</th>
     <th>Venue</th>
     <th>City</th>
+    <% if @show_organizers %>
+      <th>Organizers</th>
+    <% end %>
   </tr>
   </thead>
 
@@ -17,13 +21,12 @@
   <% events.each do |event| %>
     <tr>
       <td>
-        <%= link_to event.title, event.respond_to?(:url) ? event.url : event %>
-        <% if event.meetup_student_event_id %>
-          <%= link_to "[S]", event.meetup_url(event.meetup_student_event_id), class: 'meetup-link' %>
+        <% if event.to_linkable.present? %>
+          <%= link_to event.title, event.to_linkable %>
+        <% else %>
+          <%= event.title %>
         <% end %>
-        <% if event.meetup_volunteer_event_id %>
-          <%= link_to "[V]", event.meetup_url(event.meetup_volunteer_event_id), class: 'meetup-link' %>
-        <% end %>
+        <%= external_links(event) %>
       </td>
       <td>
         <%= formatted_event_date(event) %>
@@ -34,6 +37,19 @@
       <% else %>
         <td></td>
         <td></td>
+      <% end %>
+      <% if @show_organizers %>
+        <td>
+          <% if event.organizers.is_a? (ActiveRecord::Relation) %>
+            <% event.organizers.each do |organizer| %>
+              <%= link_to user_profile_path(organizer.id) do  %>
+                <%= organizer.first_name  %>
+                <%= organizer.last_name  %>
+              <% end %>
+              <br>
+            <% end %>
+          <% end %>
+        </td>
       <% end %>
     </tr>
   <% end %>

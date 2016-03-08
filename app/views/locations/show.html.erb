@@ -1,14 +1,33 @@
-<h1><%= @location.name %></h1>
+<%= content_for(:header_text, @location.name) %>
 
-<h2>Address:</h2>
-<%= link_to pretty_print_address(@location), location_map_link(@location) %>
+<div class="row">
+  <div class="col-md-4">
+    <%= render "shared/map", locations: [@location] %>
+  </div>
+  <div class="col-md-8">
+    <% if @location.archived_at.present? %>
+      <div class="alert alert-warning">
+        This location is archived, and can no longer be used for events.
+      </div>
+    <% end %>
+    <% if @location.region.has_leader?(current_user) %>
+      <div class="pull-right">Last Updated: <%= @location.updated_at.to_formatted_s(:long) %></div>
+    <% end %>
+    <h2>Address:</h2>
+    <%= link_to pretty_print_address(@location), location_map_link(@location) %>
 
-<%= render "shared/map", location: @location %>
+    <% if @location.region.has_leader?(current_user) %>
+      <h2>Contact info:</h2>
+      <%= @location.contact_info %>
+      <h2>Notes:</h2>
+      <%= @location.notes %>
+    <% end %>
+  </div>
+</div>
 
 <h2 style="margin-top: 40px;">Events</h2>
-<%= render 'shared/events_table', events: @location.events %>
+<%= render 'shared/events_table', events: @location.all_events.published_or_visible_to(current_user) %>
 
 <%= render 'shared/actions', links: [
-  ['Edit', edit_location_path(@location)],
-  ['Back', locations_path]
+  ['Edit', edit_location_path(@location)]
 ] %>

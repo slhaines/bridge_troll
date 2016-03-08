@@ -1,7 +1,10 @@
+toggleVolunteerPreferenceVisibility = ->
+  if $(".volunteer_preference:checked").length > 0
+    $(".volunteer_preference_panel").show();
+  else
+    $(".volunteer_preference_panel").hide();
+
 $ ->
-  children_info_fields = $('#rsvp_childcare_info').closest('.field')
-  $('#rsvp_needs_childcare').change ->
-    if $('#rsvp_needs_childcare').is(':checked')
-      children_info_fields.removeClass('hidden')
-    else
-      children_info_fields.addClass('hidden')
+  toggleVolunteerPreferenceVisibility()
+
+$(document).on 'click', '.volunteer_preference', toggleVolunteerPreferenceVisibility

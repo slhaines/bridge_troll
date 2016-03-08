@@ -6,15 +6,43 @@ describe "checking in attendees" do
     @event.event_sessions.first.update_attributes(name: 'Unique Session Name')
   end
 
-  describe "as a normal user" do
+  describe "as an organizer" do
+    let!(:attendee_rsvp) { create(:volunteer_rsvp, event: @event) }
+
     before do
-      rsvp = create(:volunteer_rsvp, event: @event)
-      sign_in_as(rsvp.user)
+      organizer = create(:user)
+      @event.organizers << organizer
+      sign_in_as(organizer)
     end
 
-    it 'is not allowed' do
-      visit event_event_sessions_path(@event)
-      current_path.should == events_path
+    it "can assign another user as a checkiner", js: true do
+      visit event_checkiners_path(@event)
+
+      select(attendee_rsvp.user.full_name, from: 'event_checkiner_rsvp_id')
+
+      click_button "Assign"
+
+      expect(page).to have_content(attendee_rsvp.user.email)
+      expect(page).to have_content(attendee_rsvp.user.full_name)
+      expect(page).to have_select('event_checkiner[rsvp_id]', options: [''])
+    end
+
+    describe "when a user is assigned as a checkiner" do
+      before do
+        attendee_rsvp.update_attributes(checkiner: true)
+      end
+
+      it "can remove checkiner status from the user" do
+        visit event_checkiners_path(@event)
+
+        expect(page).to have_content(attendee_rsvp.user.email)
+        expect(page).to have_selector('input[value="Remove"]')
+
+        click_button "Remove"
+
+        expect(page).not_to have_content(attendee_rsvp.user.email)
+        expect(page).not_to have_selector('input[value="Remove"]')
+      end
     end
   end
 
@@ -24,7 +52,7 @@ describe "checking in attendees" do
 
       @student_rsvp = create(:student_rsvp, event: @event)
       @student = @student_rsvp.user
-      @student_rsvp_session = create(:rsvp_session, rsvp: @student_rsvp, event_session: @event.event_sessions.first)
+      @student_rsvp_session = @student_rsvp.rsvp_sessions.first
       sign_in_as(rsvp.user)
     end
 
@@ -33,16 +61,18 @@ describe "checking in attendees" do
 
       click_link "Check in for Unique Session Name"
 
-      page.should have_content("Check-ins for Unique Session Name")
+      expect(page).to have_content("Check-ins for Unique Session Name")
 
       within "#rsvp_session_#{@student_rsvp_session.id}" do
-        within "#create_rsvp_session_#{@student_rsvp_session.id}" do
+        within '.create' do
           click_on 'Check In'
         end
-        page.should have_content('Checked In!')
+        expect(page).to have_content('Checked In!')
       end
 
-      page.should have_content("Total check-ins for this session: 1")
+      within '.checkin-counts' do
+        expect(page).to have_content("1")
+      end
     end
   end
 end

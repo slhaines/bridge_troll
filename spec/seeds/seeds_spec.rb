@@ -16,23 +16,23 @@ def assert_no_rows_present
       next unless count > 0
       puts "#{klass}: #{count}"
     end
-    total.should == 0
+    expect(total).to eq(0)
   end
 end
 
 describe "#seed_event" do
   it "creates an event which can cleanly destroy itself" do
-    Seeder::seed_event(students_per_level_range: (1..1))
+    Seeder.seed_event(students_per_level_range: (1..1))
     event = Event.last
-    event.title.should == 'Seeded Test Event'
-    Seeder::destroy_event(event)
+    expect(event.title).to eq('Seeded Test Event')
+    Seeder.destroy_event(event)
     assert_no_rows_present
   end
 
   it "destroys itself when asked to create itself twice" do
-    Seeder::seed_event(students_per_level_range: (1..1))
-    Seeder::seed_event(students_per_level_range: (1..1))
-    Event.count.should == 1
+    Seeder.seed_event(students_per_level_range: (1..1))
+    Seeder.seed_event(students_per_level_range: (1..1))
+    expect(Event.count).to eq(1)
   end
 
   it 'does not destroy users that get accidentally associated to the event' do
@@ -40,21 +40,21 @@ describe "#seed_event" do
     innocent_user = create(:user)
     other_event.organizers << innocent_user
 
-    event = Seeder::seed_event(students_per_level_range: (1..1))
+    event = Seeder.seed_event(students_per_level_range: (1..1))
     event.organizers << innocent_user
 
-    Seeder::destroy_event(event)
-    User.find_by_id(innocent_user.id).should be_present
+    Seeder.destroy_event(event)
+    expect(User.find_by_id(innocent_user.id)).to be_present
   end
 end
 
 describe '#admin_user' do
   it 'creates an admin user' do
     expect {
-      Seeder::admin_user
+      Seeder.admin_user
     }.to change(User, :count).by(1)
     created_user = User.last
-    created_user.should be_admin
-    created_user.should be_confirmed
+    expect(created_user).to be_admin
+    expect(created_user).to be_confirmed
   end
 end

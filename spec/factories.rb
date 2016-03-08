@@ -2,11 +2,11 @@ FactoryGirl.define do
   factory :user do
     first_name { Faker::Name.first_name }
     last_name { Faker::Name.last_name }
-    gender { ["male", "female", "genderqueer"].sample }
+    gender { %w(male female genderqueer).sample }
     sequence(:email) { |n| "example#{n}@example.com" }
     confirmed_at DateTime.now
     password "password"
-
+    
     factory :admin do
       admin true
     end
@@ -23,18 +23,22 @@ FactoryGirl.define do
     starts_at DateTime.now
   end
 
-  factory :event_with_no_sessions, :class => Event do
+  factory :event_with_no_sessions, class: Event do
     sequence(:title) { |n| "Event #{n}" }
     details "This is note in the details attribute."
     time_zone "Hawaii"
     starts_at 1.hour.from_now
     ends_at { starts_at + 1.day }
-    published true
+    current_state :published
     student_rsvp_limit 100
+    volunteer_rsvp_limit 75
     location
+    chapter
     course_id Course::RAILS.id
     volunteer_details "I am some details for volunteers."
     student_details "I am some details for students."
+    target_audience "default target audience"
+    survey_greeting "Test greeting"
 
     factory :event do
       before(:create) do |event, evaluator|
@@ -47,11 +51,20 @@ FactoryGirl.define do
     sequence(:name) { |n| "Location #{n}" }
     sequence(:address_1) { |n| "#{n} Street" }
     city "San Francisco"
-    chapter
+    region
+  end
+
+  factory :region do
+    sequence(:name) { |n| "Region #{n}" }
   end
 
   factory :chapter do
-    sequence(:name) { |n| "Chapter #{n}" }
+    sequence(:name) { |n| "Region #{n}" }
+    organization
+  end
+
+  factory :organization do
+    sequence(:name) { |n| "Organization #{n}" }
   end
 
   factory :event_session do
@@ -86,6 +99,25 @@ FactoryGirl.define do
       class_level 0
     end
 
+    factory :organizer_rsvp do
+      role Role.find_by_title 'Organizer'
+    end
+    transient do
+      session_checkins nil
+    end
+
+    after(:build) do |rsvp, evaluator|
+      if evaluator.session_checkins
+        evaluator.session_checkins.each do |event_session_id, checked_in|
+          rsvp.rsvp_sessions << build(:rsvp_session, rsvp: rsvp, event_session_id: event_session_id, checked_in: checked_in)
+        end
+        rsvp.checkins_count = evaluator.session_checkins.values.select { |v| v }.length
+      else
+        unless rsvp.rsvp_sessions.length > 0
+          rsvp.rsvp_sessions << build(:rsvp_session, rsvp: rsvp, event_session: rsvp.event.event_sessions.first)
+        end
+      end
+    end
   end
 
   factory :dietary_restriction do
@@ -103,5 +135,18 @@ FactoryGirl.define do
     good_things "Those dog stickers were great"
     bad_things "More vegan food"
     other_comments "Thank you!"
+  end
+
+  factory :event_email do
+    event
+    association(:sender, factory: :user)
+    subject 'hello world'
+    body 'this is an exciting email'
+  end
+
+  factory :section do
+    event
+    class_level 1
+    sequence(:name) { |n| "sec_#{n}" }
   end
 end

@@ -1,33 +1,42 @@
-<div class='event-card <% unless event.published %>unpublished<% end %>' data-chapter-id="<%= event.chapter.try(:id) %>">
-  <% unless event.published %>
-    <div class='pull-right unpublished-indicator'>UNPUBLISHED</div>
+<div class='event-card js-match-height-item <% unless event.published? %>unpublished<% end %>' data-region-id="<%= event.region.try(:id) %>">
+  <% unless event.published? %>
+    <div class='pull-right unpublished-indicator'><%= state_display(event) %></div>
   <% end %>
   <div class='event-title'>
     <%= link_to event.title, event %>
-    <% if event.meetup_student_event_id %>
-      <%= link_to "[S]", event.meetup_url(event.meetup_student_event_id), class: 'meetup-link' %>
-    <% end %>
-    <% if event.meetup_volunteer_event_id %>
-      <%= link_to "[V]", event.meetup_url(event.meetup_volunteer_event_id), class: 'meetup-link' %>
-    <% end %>
+    <%= external_links(event) %>
   </div>
   <div class='event-times'>
     <% event.event_sessions.each_with_index do |session, index| %>
       <i class='fa fa-calendar'></i><%= formatted_session_fancy_date(session) %><% if index < event.event_sessions.length - 1 %><br /><% end %>
+      <% if event.has_multiple_locations? %>
+        <div class='event-session-location'>
+          <i class='fa fa-map-marker'></i><%= session.true_location.name %>,
+          <%= [session.true_location.city, session.true_location.state].select(&:present?).join(', ') %>
+        </div>
+      <% end %>
     <% end %>
   </div>
-  <div class='event-location'>
-    <% if event.location %>
+  <% if event.location && !event.has_multiple_locations? %>
+    <div class='event-location'>
       <i class='fa fa-map-marker'></i><%= event.location.name %>,
       <%= [event.location.city, event.location.state].select(&:present?).join(', ') %>
-    <% end %>
-  </div>
+    </div>
+  <% end %>
   <div class='event-counts'>
-    <div><i class='fa fa-user'></i>Volunteers: <%= event.volunteer_rsvps_count %></div>
+    <div>
+      <i class='fa fa-user'></i>Volunteers: <%= event.volunteer_rsvps_count %> 
+      <% if event.volunteer_rsvp_limit %>
+      / <%= event.volunteer_rsvp_limit %>
+      <% end %>
+      <% if event.volunteers_at_limit? %>
+        (<%= event.volunteer_waitlist_rsvps_count %> Waitlisted)
+      <% end %>
+    </div>
     <% if event.allow_student_rsvp %>
       <div>
         <i class='fa fa-user'></i>Students: <%= event.student_rsvps_count %> / <%= event.student_rsvp_limit %>
-        <% if event.at_limit? %>
+        <% if event.students_at_limit? %>
           (<%= event.student_waitlist_rsvps_count %> Waitlisted)
         <% end %>
       </div>

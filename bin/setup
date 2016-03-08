@@ -1,0 +1,71 @@
+#!/usr/bin/env ruby
+require 'pathname'
+
+# path to your application root.
+APP_ROOT = Pathname.new File.expand_path('../../',  __FILE__)
+
+Dir.chdir APP_ROOT do
+  is_osx = Gem::Platform.local.os == 'darwin'
+
+  puts "== Installing dependencies =="
+  expected_ruby_version = File.read(APP_ROOT.join('.ruby-version')).strip
+  if RUBY_VERSION != expected_ruby_version
+    puts "You're not using Ruby #{expected_ruby_version}. You should install or switch to it!"
+  end
+
+  system "gem install bundler --conservative"
+  system "bundle check || bundle install --without production"
+
+  if `which npm`.empty?
+    puts <<~EOT
+      You don't have npm installed, which is needed to install bower.
+      Install npm by installing node.js from https://nodejs.org
+    EOT
+    exit 1
+  end
+  system "npm install -g bower"
+  system "rake bower:install"
+
+  if `which phantomjs`.empty?
+    puts <<~EOT
+      You don't have phantomjs installed, which means you won't be able to run
+      our full test suite.
+    EOT
+
+    if is_osx
+      puts <<~EOT
+        Since you're on Mac OS X. You can install it with Homebrew using
+          brew install phantomjs
+
+        If you don't have homebrew, check out http://mxcl.github.com/homebrew/
+      EOT
+    else
+      puts <<~EOT
+        Use your system's package manager to install phantomjs.
+          http://phantomjs.org
+      EOT
+    end
+  end
+
+  puts "\n== Removing old logs and tempfiles =="
+  system "rm -f log/*"
+  system "rm -rf tmp/cache"
+
+  puts "\n== Restarting application server =="
+  system "touch tmp/restart.txt"
+
+  puts "\n== Preparing database =="
+
+  require 'yaml'
+  require 'erb'
+  db_config = YAML.load(ERB.new(File.read("config/database.yml")).result)
+  if File.exists?(db_config['development']['database'])
+    puts "Database already exists, running migrations..."
+    system "bin/rake db:migrate"
+  else
+    puts "Database not found, initializing..."
+    system "bin/rake db:setup"
+  end
+
+  puts "Initialization complete, run `rake db:seed` to add sample events, if desired."
+end

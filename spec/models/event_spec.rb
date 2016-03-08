@@ -5,20 +5,54 @@ describe Event do
     @user = create(:user)
   end
 
-  it { should belong_to(:location) }
-  it { should have_many(:rsvps) }
-  it { should have_many(:event_sessions) }
-  it { should validate_numericality_of(:student_rsvp_limit) }
+  it { is_expected.to belong_to(:location) }
+  it { is_expected.to have_many(:rsvps) }
+  it { is_expected.to have_many(:event_sessions) }
+  it { is_expected.to validate_numericality_of(:student_rsvp_limit).is_greater_than(0) }
+  it { is_expected.to validate_numericality_of(:volunteer_rsvp_limit).is_greater_than(0) }
+  it { is_expected.to validate_presence_of(:title) }
 
-  it { should validate_presence_of(:title) }
+  describe "validation of target_audience" do
+    subject { Event.new }
+    before { allow(subject).to receive(:allow_student_rsvp?) { true } }
+    it { is_expected.to validate_presence_of(:target_audience) }
+
+    context "when event is not a workshop" do
+      before { allow(subject).to receive(:allow_student_rsvp?) { false } }
+      it { is_expected.not_to validate_presence_of(:target_audience) }
+    end
+
+    context "when event is not a new event and never had target_audience set" do
+      before {
+        allow(subject).to receive(:new_record?) { false }
+        allow(subject).to receive(:target_audience_was) { false }
+      }
+      it { is_expected.not_to validate_presence_of(:target_audience) }
+    end
+  end
 
   it "validates that there is at least one event session" do
     event = create(:event)
     event.event_sessions.destroy_all
-    event.should have(1).error_on(:event_sessions)
+    expect(event).to have(1).error_on(:event_sessions)
 
     event.event_sessions << build(:event_session)
-    event.should be_valid
+    expect(event).to be_valid
+  end
+
+  it "validates that allowed_operating_system_ids correspond to OperatingSystem records" do
+    valid = [nil, [OperatingSystem.first.id, OperatingSystem.last.id]]
+    invalid = ['fjord', [], [999999]]
+
+    valid.each do |value|
+      event = Event.new(restrict_operating_systems: true, allowed_operating_system_ids: value)
+      expect(event).to have(0).errors_on(:allowed_operating_system_ids)
+    end
+
+    invalid.each do |value|
+      event = Event.new(restrict_operating_systems: true, allowed_operating_system_ids: value)
+      expect(event).to have(1).errors_on(:allowed_operating_system_ids)
+    end
   end
 
   it "sorts event_sessions by ends_at" do
@@ -30,20 +64,20 @@ describe Event do
     session1 = create(:event_session, event: event)
     session1.update_attributes(starts_at: 10.days.ago, ends_at: 9.days.ago)
 
-    event.reload.event_sessions.should == [session1, session2, session3]
+    expect(event.reload.event_sessions).to eq([session1, session2, session3])
   end
 
   it "must have a time zone" do
-    event = build(:event, :time_zone => nil)
-    event.should have(1).error_on(:time_zone)
+    event = build(:event, time_zone: nil)
+    expect(event).to have(1).error_on(:time_zone)
   end
 
   it "must have a valid time zone" do
-    event = build(:event, :time_zone => "xxx")
-    event.should have(1).error_on(:time_zone)
+    event = build(:event, time_zone: "xxx")
+    expect(event).to have(1).error_on(:time_zone)
 
-    event = build(:event, :time_zone => 'Hawaii')
-    event.should have(0).errors
+    event = build(:event, time_zone: 'Hawaii')
+    expect(event).to have(0).errors
   end
 
   describe "updating an event" do
@@ -57,24 +91,39 @@ describe Event do
 
       it 'is allowed if the new limit is greater than or equal to the current number of attendees' do
         @event.update_attributes(student_rsvp_limit: 2)
-        @event.should have(0).errors_on(:student_rsvp_limit)
+        expect(@event).to have(0).errors_on(:student_rsvp_limit)
       end
 
       it 'is disallowed if anyone would be kicked out of the workshop' do
         @event.update_attributes(student_rsvp_limit: 1)
-        @event.should have(1).errors_on(:student_rsvp_limit)
+        expect(@event).to have(1).errors_on(:student_rsvp_limit)
+      end
+
+      it 'is disallowed if the proposed limit is empty' do
+        @event.update_attributes(student_rsvp_limit: 0)
+        expect(@event).to have(2).errors_on(:student_rsvp_limit)
       end
     end
 
     it "does allow student_rsvp_limit to be increased" do
+      event = create(:event, volunteer_rsvp_limit: 10)
+      event.update_attributes(volunteer_rsvp_limit: 20)
+      expect(event).to have(0).errors_on(:volunteer_rsvp_limit)
+    end
+
+    it "does allow volunteer_rsvp_limit to be increased" do
       event = create(:event, student_rsvp_limit: 10)
       event.update_attributes(student_rsvp_limit: 20)
-      event.should have(0).errors_on(:student_rsvp_limit)
+      expect(event).to have(0).errors_on(:student_rsvp_limit)
     end
 
     it "reorders the waitlist" do
+      waitlist_manager = double(:waitlist_manager, reorder_waitlist!: true)
+      allow(WaitlistManager).to receive(:new).and_return(waitlist_manager)
+
       event = create(:event, student_rsvp_limit: 10)
-      event.should_receive(:reorder_waitlist!)
+
+      expect(waitlist_manager).to receive(:reorder_waitlist!)
       event.update_attributes(student_rsvp_limit: 200)
     end
   end
@@ -83,55 +132,52 @@ describe Event do
     context 'location is set' do
       let(:event) { build(:event, location: build(:location, name: 'FUNZONE!')) }
       it 'returns the name of the location' do
-        event.location_name.should eq('FUNZONE!')
+        expect(event.location_name).to eq('FUNZONE!')
       end
     end
 
     context 'location is nil' do
       let(:event) { build(:event, location: nil) }
       it 'returns an empty string' do
-        event.location_name.should eq('')
+        expect(event.location_name).to eq('')
       end
     end
   end
 
   describe '#rsvps_with_childcare' do
-    it 'includes all rsvps with childcare requested' do
-      event = create(:event)
-      event.rsvps_with_childcare.should == event.student_rsvps.needs_childcare + event.volunteer_rsvps.needs_childcare
+    let(:event) { create(:event, student_rsvp_limit: 1) }
+    let!(:volunteer_rsvp) { create(:volunteer_rsvp, event: event) }
+    let!(:student_rsvp) { create(:student_rsvp, event: event) }
+    let!(:waitlisted_rsvp) { create(:student_rsvp, event: event, waitlist_position: 1) }
+
+    it 'includes all confirmed rsvps with childcare requested' do
+      expect(event.rsvps.count).to eq(3)
+      expect(event.rsvps_with_childcare).to match_array([student_rsvp, volunteer_rsvp])
     end
   end
 
   describe '#starts_at, #ends_at' do
     it 'populates from the event_session when creating an event+session together' do
-      event = Event.create(
-        title: "Amazingly Sessioned Event",
-        details: "This is note in the details attribute.",
-        time_zone: "Hawaii",
-        published: true,
-        student_rsvp_limit: 100,
-        course_id: Course::RAILS.id,
-        volunteer_details: "I am some details for volunteers.",
-        student_details: "I am some details for students.",
-        event_sessions_attributes: {
-          "0" => {
-            name: "My Amazing Session",
-            required_for_students: "1",
-            "starts_at(1i)" => "2015",
-            "starts_at(2i)" => "01",
-            "starts_at(3i)" => "12",
-            "starts_at(4i)" => "15",
-            "starts_at(5i)" => "15",
-            "ends_at(1i)" => "2015",
-            "ends_at(2i)" => "01",
-            "ends_at(3i)" => "12",
-            "ends_at(4i)" => "17",
-            "ends_at(5i)" => "45"
-          }
+      next_year = DateTime.current.year + 1
+      attrs = attributes_for(:event, event_sessions_attributes: {
+        "0" => {
+          name: "My Amazing Session",
+          required_for_students: "1",
+          "starts_at(1i)" => next_year.to_s,
+          "starts_at(2i)" => "01",
+          "starts_at(3i)" => "12",
+          "starts_at(4i)" => "15",
+          "starts_at(5i)" => "15",
+          "ends_at(1i)" => next_year.to_s,
+          "ends_at(2i)" => "01",
+          "ends_at(3i)" => "12",
+          "ends_at(4i)" => "17",
+          "ends_at(5i)" => "45"
         }
-      )
-      event.starts_at.should == event.event_sessions.first.starts_at
-      event.ends_at.should == event.event_sessions.first.ends_at
+      })
+      event = Event.create(attrs.merge(chapter_id: create(:chapter).id))
+      expect(event.starts_at).to eq(event.event_sessions.first.starts_at)
+      expect(event.ends_at).to eq(event.event_sessions.first.ends_at)
     end
   end
 
@@ -139,12 +185,12 @@ describe Event do
     let(:event) { create(:event) }
 
     it "is true when a user is volunteering at an event" do
-      create(:rsvp, :user => @user, :event => event)
-      event.volunteer?(@user).should == true
+      create(:rsvp, user: @user, event: event)
+      expect(event.volunteer?(@user)).to eq(true)
     end
 
     it "is false when a user is not volunteering at an event" do
-      event.volunteer?(@user).should == false
+      expect(event.volunteer?(@user)).to eq(false)
     end
   end
 
@@ -152,20 +198,34 @@ describe Event do
     let(:event) { create(:event) }
 
     it "returns true when a user is a waitlisted student" do
-      create(:student_rsvp, :user => @user, :event => event, waitlist_position: 1)
-      event.waitlisted_student?(@user).should == true
+      create(:student_rsvp, user: @user, event: event, waitlist_position: 1)
+      expect(event.waitlisted_student?(@user)).to eq(true)
     end
 
     it "returns false when a user is not waitlisted" do
-      create(:student_rsvp, :user => @user, :event => event)
-      event.waitlisted_student?(@user).should == false
+      create(:student_rsvp, user: @user, event: event)
+      expect(event.waitlisted_student?(@user)).to eq(false)
+    end
+  end
+
+  describe "#waitlisted_volunteer?" do
+    let(:event) { create(:event) }
+
+    it "returns true when a user is a waitlisted volunteer" do
+      create(:volunteer_rsvp, user: @user, event: event, waitlist_position: 1)
+      expect(event.waitlisted_volunteer?(@user)).to eq(true)
+    end
+
+    it "returns false when a user is not waitlisted" do
+      create(:volunteer_rsvp, user: @user, event: event)
+      expect(event.waitlisted_volunteer?(@user)).to eq(false)
     end
   end
 
   describe "#rsvp_for_user" do
     it "should return the rsvp for a user" do
       event = create(:event)
-      event.rsvp_for_user(@user).should == event.rsvps.find_by_user_id(@user.id)
+      expect(event.rsvp_for_user(@user)).to eq(event.rsvps.find_by_user_id(@user.id))
     end
   end
 
@@ -188,20 +248,34 @@ describe Event do
     end
 
     it "includes events that have not already ended" do
-      Event.upcoming.to_a.map(&:id).should == [@event_in_progress.id, @event_future.id]
+      expect(Event.upcoming.to_a.map(&:id)).to eq([@event_in_progress.id, @event_future.id])
     end
   end
 
-  describe ".published_or_organized_by" do
+  describe ".drafted_by" do
     before do
-      @published_event = create(:event, title: 'published event', published: true)
-      @unpublished_event = create(:event, title: 'unpublished event', published: false)
-      @organized_event = create(:event, title: 'organized event', published: false)
+      @drafted_event = create(:event, title: 'draft saved event', current_state: :draft)
+      @not_drafted_event = create(:event, title: 'draft saved event', current_state: :published)
+      @user = create(:user)
+      @drafted_event.organizers << @user
+      @not_drafted_event.organizers << @user
+    end
+
+    it 'returns only the event in draft, unpublished, state' do
+      expect(Event.drafted_by(@user)).to match_array([@drafted_event])
+    end
+  end
+
+  describe ".published_or_visible_to" do
+    before do
+      @published_event = create(:event, title: 'published event', current_state: :published)
+      @unpublished_event = create(:event, title: 'unpublished event', current_state: :pending_approval)
+      @organized_event = create(:event, title: 'organized event', current_state: :pending_approval)
     end
 
     context "when a user is not provided" do
       it 'returns only published events' do
-        Event.published_or_organized_by.should =~ [@published_event]
+        expect(Event.published_or_visible_to).to match_array([@published_event])
       end
     end
 
@@ -212,7 +286,20 @@ describe Event do
       end
 
       it "returns published events and the organizer's event" do
-        Event.published_or_organized_by(@organizer).should =~ [@published_event, @organized_event]
+        expect(Event.published_or_visible_to(@organizer)).to match_array([@published_event, @organized_event])
+      end
+    end
+
+    context "when a chapter leader is provided" do
+      before do
+        chapter = create(:chapter)
+        @leader = create(:user)
+        @chapter_event = create(:event, chapter: chapter, current_state: :pending_approval)
+        chapter.leaders << @leader
+      end
+
+      it "returns published events and unpublished events for that chapter" do
+        expect(Event.published_or_visible_to(@leader)).to match_array([@published_event, @chapter_event])
       end
     end
 
@@ -222,84 +309,154 @@ describe Event do
       end
 
       it "returns all events" do
-        Event.published_or_organized_by(@admin).should =~ [@published_event, @unpublished_event, @organized_event]
+        expect(Event.published_or_visible_to(@admin)).to match_array([@published_event, @unpublished_event, @organized_event])
       end
     end
   end
 
   describe "#details" do
     it "has default content" do
-      Event.new.details.should =~ /Workshop Description/
+      expect(Event.new.details).to match(/Workshop Description/)
     end
   end
 
-  describe "#at_limit?" do
-    context "when the event has a limit" do
+  describe "#close_rsvps" do
+    it "closes the event" do
+      event = create(:event, open: true)
+      event.close_rsvps
+      expect(event).to be_closed
+    end
+  end
+
+  describe "#reopen_rsvps" do
+    it "reopens the event" do
+      event = create(:event, open: false)
+      event.reopen_rsvps
+      expect(event).to be_open
+    end
+  end
+
+  describe "#students_at_limit?" do
+    context "when the event has a student limit" do
       let(:event) { create(:event, student_rsvp_limit: 2) }
 
       it 'is true when the limit is exceeded' do
         expect {
           3.times { create(:student_rsvp, event: event) }
-        }.to change { event.reload.at_limit? }.from(false).to(true)
+        }.to change { event.reload.students_at_limit? }.from(false).to(true)
       end
     end
 
     context "when the event has no limit (historical events)" do
-      let(:event) { create(:event, student_rsvp_limit: nil, meetup_student_event_id: 901, meetup_volunteer_event_id: 902) }
+      let(:event) do
+        external_event_data = {
+          type: 'meetup',
+          student_event: {
+            id: 901,
+            url: 'http://example.com/901'
+          }, volunteer_event: {
+            id: 902,
+            url: 'http://example.com/901'
+          }
+        }
+        create(:event, student_rsvp_limit: nil, external_event_data: external_event_data)
+      end
 
       it 'is false' do
-        event.should_not be_at_limit
+        expect(event).not_to be_students_at_limit
       end
     end
   end
 
-  describe "#reorder_waitlist!" do
+  describe "#volunteers_at_limit?" do
+    context "when the event has a volunteer limit" do
+      let(:event) { create(:event, volunteer_rsvp_limit: 2) }
+
+      it 'is true when the limit is exceeded' do
+        expect {
+          3.times { create(:volunteer_rsvp, event: event) }
+        }.to change { event.reload.volunteers_at_limit? }.from(false).to(true)
+      end
+    end
+
+    context "when the event has no limit (historical events)" do
+      let(:event) do
+        external_event_data = {
+          type: 'meetup',
+          student_event: {
+            id: 901,
+            url: 'http://example.com/901'
+          }, volunteer_event: {
+            id: 902,
+            url: 'http://example.com/901'
+          }
+        }
+        create(:event, volunteer_rsvp_limit: nil, external_event_data: external_event_data)
+      end
+
+      it 'is false' do
+        expect(event).not_to be_volunteers_at_limit
+      end
+    end
+  end
+
+  describe "#volunteers_at_limit?" do
+    context "when the event has a volunteer limit" do
+      let(:event) { create(:event, volunteer_rsvp_limit: 2) }
+
+      it 'is true when the limit is exceeded' do
+        expect {
+          3.times { create(:volunteer_rsvp, event: event) }
+        }.to change { event.reload.volunteers_at_limit? }.from(false).to(true)
+      end
+    end
+
+    context "when the event has no limit (historical events)" do
+      let(:event) do
+        external_event_data = {
+          type: 'meetup',
+          student_event: {
+            id: 901,
+            url: 'http://example.com/901'
+          }, volunteer_event: {
+            id: 902,
+            url: 'http://example.com/901'
+          }
+        }
+        create(:event, volunteer_rsvp_limit: nil, external_event_data: external_event_data)
+      end
+
+      it 'is false' do
+        expect(event).not_to be_volunteers_at_limit
+      end
+    end
+  end
+
+  describe "#editable_by?" do
     before do
-      @event = create(:event, student_rsvp_limit: 2)
-      @confirmed1 = create(:student_rsvp, event: @event)
-      @confirmed2 = create(:student_rsvp, event: @event)
-      @waitlist1 = create(:student_rsvp, event: @event, waitlist_position: 1)
-      @waitlist2 = create(:student_rsvp, event: @event, waitlist_position: 2)
-      @waitlist3 = create(:student_rsvp, event: @event, waitlist_position: 3)
+      @event = create(:event)
     end
 
-    context "when the limit has increased" do
-      before do
-        @event.update_attribute(:student_rsvp_limit, 4)
-      end
-
-      it "promotes people on the waitlist into available slots when the limit increases" do
-        @event.reorder_waitlist!
-        @event.reload
-
-        @event.student_rsvps.count.should == 4
-        @event.student_waitlist_rsvps.count.should == 1
-      end
+    it "allows admins to edit an event" do
+      expect(@event.editable_by?(create(:user, admin: true))).to be_truthy
     end
 
-    context "when a confirmed rsvp has been destroyed" do
-      before do
-        @confirmed1.destroy
-        @event.reorder_waitlist!
-      end
+    it "allows organizers to edit an event" do
+      organizer = create(:user)
+      @event.organizers << organizer
 
-      it 'promotes a waitlisted user to confirmed when the rsvp is destroyed' do
-        @waitlist1.reload.waitlist_position.should be_nil
-        @waitlist2.reload.waitlist_position.should == 1
-        @waitlist3.reload.waitlist_position.should == 2
-      end
+      expect(@event.editable_by?(organizer)).to be_truthy
     end
 
-    context "when a waitlisted rsvp has been destroyed" do
-      before do
-        @waitlist1.destroy
-        @event.reorder_waitlist!
-      end
+    it "allows chapter leaders to edit an event" do
+      leader = create(:user)
+      @event.chapter.leaders << leader
 
-      it 'reorders the waitlist when the rsvp is destroyed' do
-        @waitlist2.reload.waitlist_position.should == 1
-        @waitlist3.reload.waitlist_position.should == 2
-      end
+      expect(@event.editable_by?(leader)).to be_truthy
+    end
+
+    it "does not allow strangers to edit an event" do
+      expect(@event.editable_by?(create(:user))).to be_falsey
     end
   end
 
@@ -312,7 +469,20 @@ describe Event do
     end
 
     it 'should only include non-waitlisted students' do
-      @event.students.should == [@confirmed_rsvp.user]
+      expect(@event.students).to eq([@confirmed_rsvp.user])
+    end
+  end
+
+  describe "#volunteers" do
+    before do
+      @event = create(:event)
+      @confirmed_rsvp = create(:volunteer_rsvp, event: @event, role: Role::VOLUNTEER)
+      @waitlist_rsvp = create(:student_rsvp, event: @event, role: Role::VOLUNTEER, waitlist_position: 1)
+      @student_rsvp = create(:student_rsvp, event: @event, role: Role::STUDENT)
+    end
+
+    it 'should only include non-waitlisted volunteers' do
+      expect(@event.volunteers).to eq([@confirmed_rsvp.user])
     end
   end
 
@@ -324,28 +494,35 @@ describe Event do
 
       @last_session = create(:event_session, event: @event, ends_at: 1.year.from_now)
 
-      @rsvp1 = create(:rsvp, event: @event)
-      create(:rsvp_session, event_session: @first_session, rsvp: @rsvp1, checked_in: true)
+      @rsvp1 = create(:student_rsvp, event: @event, session_checkins: {@first_session.id => true, @last_session.id => false})
 
-      @rsvp2 = create(:rsvp, event: @event)
-      create(:rsvp_session, event_session: @last_session, rsvp: @rsvp2)
+      @rsvp2 = create(:student_rsvp, event: @event, session_checkins: {@first_session.id => false, @last_session.id => false})
 
-      @rsvp3 = create(:rsvp, event: @event)
-      create(:rsvp_session, event_session: @last_session, rsvp: @rsvp3, checked_in: true)
+      @rsvp3 = create(:student_rsvp, event: @event, session_checkins: {@first_session.id => false, @last_session.id => true})
 
       @event.reload
     end
 
     it 'counts attendances for the last session' do
       attendee_rsvp_data = @event.rsvps_with_checkins
-      attendee_rsvp_data.length.should == 3
+      expect(attendee_rsvp_data.length).to eq(3)
 
       workshop_attendees = attendee_rsvp_data.map { |rsvp| [rsvp['id'], rsvp['checked_in_session_ids']] }
-      workshop_attendees.should =~ [
+      expect(workshop_attendees).to match_array([
         [@rsvp1.id, [@first_session.id]],
         [@rsvp2.id, []],
         [@rsvp3.id, [@last_session.id]]
-      ]
+      ])
+    end
+
+    it 'includes RSVPs that are waitlisted but checked in' do
+      @event.update_attributes(student_rsvp_limit: @event.student_rsvps.count)
+      @checked_in = create(:student_rsvp, event: @event, waitlist_position: 1)
+      @checked_in.rsvp_sessions.find { |rs| rs.event_session_id = @last_session.id }.update_attribute(:checked_in, true)
+      @not_checked_in = create(:student_rsvp, event: @event, waitlist_position: 2)
+
+      rsvp_ids = @event.rsvps_with_checkins.map { |r| r['id'] }
+      expect(rsvp_ids).to match_array([@rsvp1, @rsvp2, @rsvp3, @checked_in].map(&:id))
     end
   end
 
@@ -373,84 +550,93 @@ describe Event do
       @rsvps = deep_copy(expectation)
       @checkins = deep_copy(expectation)
 
-      def add_session_rsvp(rsvp, session, checked_in)
-        create(:rsvp_session, rsvp: rsvp, event_session: session, checked_in: checked_in)
-        @rsvps[rsvp.role.id][session.id] << rsvp
-        @checkins[rsvp.role.id][session.id] << rsvp if checked_in
+      def add_rsvp(factory, session_checkins, additional_rsvp_options = {})
+        rsvp_options = {
+          event: @event,
+          session_checkins: session_checkins
+        }.merge(additional_rsvp_options)
+
+        create(factory, rsvp_options).tap do |rsvp|
+          next if additional_rsvp_options[:waitlist_position]
+
+          session_checkins.each do |session_id, checked_in|
+            @rsvps[rsvp.role.id][session_id] << rsvp
+            @checkins[rsvp.role.id][session_id] << rsvp if checked_in
+          end
+        end
       end
 
-      rsvp1 = create(:volunteer_rsvp, event: @event)
-      add_session_rsvp(rsvp1, @session1, true)
-      add_session_rsvp(rsvp1, @session2, true)
-
-      rsvp2 = create(:volunteer_rsvp, event: @event)
-      add_session_rsvp(rsvp2, @session1, true)
-      add_session_rsvp(rsvp2, @session2, false)
-
-      rsvp3 = create(:volunteer_rsvp, event: @event)
-      add_session_rsvp(rsvp3, @session1, true)
-
-      rsvp4 = create(:student_rsvp, event: @event)
-      add_session_rsvp(rsvp4, @session2, true)
-
-      rsvp5 = create(:student_rsvp, event: @event)
-      add_session_rsvp(rsvp5, @session2, true)
-
-      waitlisted = create(:student_rsvp, event: @event, waitlist_position: 1)
-      create(:rsvp_session, rsvp: waitlisted, event_session: @session2, checked_in: false)
+      add_rsvp(:volunteer_rsvp, {@session1.id => true, @session2.id => true})
+      add_rsvp(:volunteer_rsvp, {@session1.id => true, @session2.id => false})
+      add_rsvp(:volunteer_rsvp, {@session1.id => true})
+      add_rsvp(:student_rsvp, {@session2.id => true})
+      add_rsvp(:student_rsvp, {@session2.id => true})
+      add_rsvp(:student_rsvp, {@session2.id => false}, waitlist_position: 1)
     end
 
     it "sends checked in user counts to the view" do
       checkin_counts = @event.checkin_counts
-      checkin_counts[Role::VOLUNTEER.id][:rsvp].should == {
+      expect(checkin_counts[Role::VOLUNTEER.id][:rsvp]).to eq({
         @session1.id => @rsvps[Role::VOLUNTEER.id][@session1.id].length,
         @session2.id => @rsvps[Role::VOLUNTEER.id][@session2.id].length
-      }
-      checkin_counts[Role::VOLUNTEER.id][:checkin].should == {
+      })
+      expect(checkin_counts[Role::VOLUNTEER.id][:checkin]).to eq({
         @session1.id => @checkins[Role::VOLUNTEER.id][@session1.id].length,
         @session2.id => @checkins[Role::VOLUNTEER.id][@session2.id].length
-      }
+      })
 
-      checkin_counts[Role::STUDENT.id][:rsvp].should == {
+      expect(checkin_counts[Role::STUDENT.id][:rsvp]).to eq({
         @session1.id => @rsvps[Role::STUDENT.id][@session1.id].length,
         @session2.id => @rsvps[Role::STUDENT.id][@session2.id].length
-      }
-      checkin_counts[Role::STUDENT.id][:checkin].should == {
+      })
+      expect(checkin_counts[Role::STUDENT.id][:checkin]).to eq({
         @session1.id => @checkins[Role::STUDENT.id][@session1.id].length,
         @session2.id => @checkins[Role::STUDENT.id][@session2.id].length
-      }
+      })
     end
   end
 
   describe "waitlists" do
     before do
-      @event = create(:event, student_rsvp_limit: 2)
+      @event = create(:event, student_rsvp_limit: 2, volunteer_rsvp_limit: 2)
       @confirmed_rsvp = create(:student_rsvp, event: @event, role: Role::STUDENT)
       @waitlist_rsvp = create(:student_rsvp, event: @event, role: Role::STUDENT, waitlist_position: 1)
+      @confirmed_volunteer_rsvp = create(:volunteer_rsvp, event: @event, role: Role::VOLUNTEER)
+      @waitlist_volunteer_rsvp = create(:volunteer_rsvp, event: @event, role: Role::VOLUNTEER, waitlist_position: 1)
     end
 
     it "returns only confirmed rsvps in #student_rsvps" do
-      @event.student_rsvps.should == [@confirmed_rsvp]
+      expect(@event.student_rsvps.reload).to eq([@confirmed_rsvp])
+    end
+
+    it "returns only confirmed rsvps in #volunteer_rsvps" do
+      expect(@event.volunteer_rsvps.reload).to eq([@confirmed_volunteer_rsvp])
     end
 
     it "returns only waitlisted rsvps in #student_waitlist_rsvps" do
-      @event.student_waitlist_rsvps.should == [@waitlist_rsvp]
+      expect(@event.student_waitlist_rsvps.reload).to eq([@waitlist_rsvp])
+    end
+
+    it "returns only waitlisted rsvps in #volunteer_waitlist_rsvps" do
+      expect(@event.volunteer_waitlist_rsvps.reload).to eq([@waitlist_volunteer_rsvp])
     end
   end
 
   describe "methods for presenting dietary restrictions" do
     before do
-      @event = create(:event)
-      @rsvp = create(:rsvp, event: @event)
+      @event = create(:event, student_rsvp_limit: 2)
+      @rsvp = create(:rsvp,  event: @event, dietary_info: "Paleo")
       @rsvp2 = create(:rsvp, event: @event, dietary_info: "No sea urchins")
+      @waitlisted = create(:rsvp, event: @event, dietary_info: "Pizza only", waitlist_position: 1)
       create(:dietary_restriction, restriction: "gluten-free", rsvp: @rsvp)
       create(:dietary_restriction, restriction: "vegan", rsvp: @rsvp)
       create(:dietary_restriction, restriction: "vegan", rsvp: @rsvp2)
+      create(:dietary_restriction, restriction: "vegan", rsvp: @waitlisted)
     end
 
     describe "#dietary_restrictions_totals" do
-      it "should return the total for each dietary restrictions" do
-        @event.dietary_restrictions_totals.should == { "gluten-free" => 1, "vegan" => 2 }
+      it "should return the total for each dietary restrictions for confirmed attendees" do
+        expect(@event.dietary_restrictions_totals).to eq({ "gluten-free" => 1, "vegan" => 2 })
       end
     end
 
@@ -459,6 +645,5 @@ describe Event do
         expect(@event.other_dietary_restrictions).to eq(["Paleo", "No sea urchins"])
       end
     end
-
   end
 end

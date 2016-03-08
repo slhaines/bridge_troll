@@ -1,4 +1,4 @@
-<div id="level_buttons">
+<div class="level_buttons">
   <% levels.each do |level| %>
     <div class="class_level_line">
       <label class='class_level' >
@@ -21,7 +21,7 @@
         <% if defined?(f) %>
           <%= f.radio_button :class_level, 0 %>
         <% end %>
-        <span class="label">Any</span>
+        <span class="label btn-gray">Any</span>
         No preference
       </label>
     </div>

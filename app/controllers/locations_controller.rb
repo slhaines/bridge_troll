@@ -1,49 +1,62 @@
 class LocationsController < ApplicationController
-  before_filter :authenticate_user!, :except => [:show, :index]
-  before_filter :assign_location, :only => [:show, :edit, :update, :destroy]
+  before_action :authenticate_user!, except: [:show, :index]
+  before_action :assign_location, only: [:show, :edit, :update, :destroy, :archive]
 
   def index
-    @locations = Location.all
+    skip_authorization
+    @locations = Location.all.includes(:events, :event_sessions)
   end
 
   def show
+    skip_authorization
   end
 
   def new
+    skip_authorization
     @location = Location.new
   end
 
   def edit
+    skip_authorization
   end
 
   def create
+    skip_authorization
     @location = Location.new(location_params)
 
-    if @location.save
-      redirect_to @location, notice: 'Location was successfully created.'
-    else
-      render action: "new"
+    respond_to do |format|
+      if @location.save
+        format.html { redirect_to @location, notice: 'Location was successfully created.'}
+        format.js   {}
+      else
+        format.html { render :new }
+        format.js   { render action: 'create_failed' }
+      end
     end
   end
 
+  def archive
+    authorize @location
+
+    @location.archive!
+
+    redirect_to locations_path, notice: 'Location was successfully archived.'
+  end
+
   def update
-    unless @location.editable_by?(current_user)
-      return redirect_to @location, alert: 'This location is only editable by admins and organizers of events that have taken place there.'
-    end
+    authorize @location, :edit?
 
     @location.gmaps = false
 
     if @location.update_attributes(location_params)
       redirect_to @location, notice: 'Location was successfully updated.'
     else
-      render action: "edit"
+      render :edit
     end
   end
 
   def destroy
-    if @location.events.count > 0
-      return redirect_to root_url, alert: "Can't delete a location that's still assigned to an event."
-    end
+    authorize @location
 
     @location.destroy
 
@@ -53,7 +66,9 @@ class LocationsController < ApplicationController
   private
 
   def location_params
-    params.require(:location).permit(Location::PERMITTED_ATTRIBUTES)
+    attributes = Location::PERMITTED_ATTRIBUTES
+    attributes = attributes + [:contact_info, :notes] if @location.try(:additional_details_editable_by?, current_user)
+    params.require(:location).permit(attributes)
   end
 
   def assign_location

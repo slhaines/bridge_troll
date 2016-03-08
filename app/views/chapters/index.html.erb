@@ -4,9 +4,8 @@
   <thead>
     <tr>
       <th data-default-sort="asc">Name</th>
-      <th>Locations</th>
       <th>Events</th>
-      <% if user_signed_in? %>
+      <% if current_user.try(:admin?) %>
         <th></th>
       <% end %>
     </tr>
@@ -16,13 +15,11 @@
     <% @chapters.each do |chapter| %>
       <tr>
         <td><%= link_to chapter.name, chapter %></td>
-        <td data-label="Locations:"><%= chapter.locations_count %></td>
-        <td data-label="Events:"><%= chapter.events.count %></td>
-        <% if user_signed_in? %>
+        <td data-label="Events:"><%= chapter.events_count + chapter.external_events_count %></td>
+        <% if current_user.try(:admin?) %>
           <td>
-            <%= link_to 'Edit', edit_chapter_path(chapter), class: 'btn fa-before fa-edit'  %>
-            <% if chapter.locations_count == 0 %>
-              <%= link_to 'Destroy', chapter, data: { confirm: 'Are you sure?' }, method: :delete, class: 'btn btn-danger' %>
+            <% if current_user.try(:admin?) && chapter.destroyable? %>
+              <%= link_to 'Destroy', chapter, data: {confirm: 'Are you sure?'}, method: :delete, class: 'btn btn-danger' %>
             <% end %>
           </td>
         <% end %>
@@ -31,8 +28,4 @@
   </tbody>
 </table>
 
-<%= render 'shared/actions', links: [
-  user_signed_in? ? ['New Chapter', new_chapter_path] : nil,
-  ['Locations', locations_path],
-  ['Events', events_path]
-] %>
+<%= render 'shared/actions', links: crud_object_nav_links(:chapter, current_user.try(:admin?) ? ['New Chapter', new_chapter_path] : nil) %>

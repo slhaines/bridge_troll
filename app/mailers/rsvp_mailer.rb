@@ -1,4 +1,4 @@
-class RsvpMailer < ActionMailer::Base
+class RsvpMailer < BaseMailer
   add_template_helper(EventsHelper)
   add_template_helper(LocationsHelper)
 
@@ -14,11 +14,26 @@ class RsvpMailer < ActionMailer::Base
     email(rsvp, "Reminder: You've signed up for #{rsvp.event.title}")
   end
 
+  def reminder_for_session(rsvp_session)
+    rsvp = rsvp_session.rsvp
+    email(rsvp, "Reminder: You've signed up for #{rsvp_session.event_session.name} at #{rsvp.event.title}")
+  end
+
   def off_waitlist(rsvp)
     @rsvp = rsvp
     mail(
       to: rsvp.user.email,
       subject: "You're confirmed for #{rsvp.event.title}"
+    )
+  end
+
+  def childcare_notification(rsvp)
+    @rsvp = rsvp
+    set_recipients(rsvp.event.organizers.map(&:email))
+
+    mail(
+      subject: "Childcare request for #{rsvp.event.title}",
+      template_name: 'childcare_notification'
     )
   end
 
