@@ -93,6 +93,7 @@ class EventsController < ApplicationController
   end
 
   def past_attendance
+    skip_authorization
     @past_event_ids = Event.where("starts_at < ?", Time.now).pluck(:id)
     @total_past_events = @past_event_ids.count
     @past_rsvp_ids = Rsvp.where(event_id: @past_event_ids)
